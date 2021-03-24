@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            color: #fff;
+        }
+        select, option, input, th, button{
+            color: #000;
+        }
+        body{
+            height: 100vh;
+            background: #001;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        table, td, th{
+            border: solid 1px #fff; 
+            border-collapse: collapse;
+        }
+        th{
+            background: skyblue;
+        }
+    </style>
+</head>
+<body>
+    <form onSubmit="submitData(event)">
+        <label for="homeTeam">Hjemmelag: </label>
+        <select id="homeTeam">
+            <option value="inter">Inter</option>
+            <option value="milan">Milan</option>
+            <option value="roma">Roma</option>
+        </select>
+        <label for="homeTeamGoals">Mål: </label>
+        <input type="number" id="homeTeamGoals" value="0" min="0">
+        <br><br>
+        <label for="awayTeam">Bortelag: </label>
+        <select id="awayTeam">
+            <option value="inter">Inter</option>
+            <option selected value="milan">Milan</option>
+            <option value="roma">Roma</option>
+        </select>
+        <label for="awayTeamGoals">Mål: </label>
+        <input type="number" id="awayTeamGoals" value="0" min="0">
+        <button type="submit">Submit</button>
+    </form>
+    <br>
+    <table>
+        <thead>
+            <tr>
+                <th>Nr</th>
+                <th>Klubb</th>
+                <th>Anntall kamper</th>
+                <th>Vunnet</th>
+                <th>Tapt</th>
+                <th>Uavgjort</th>
+                <th>Mål skårt</th>
+                <th>Mål sluppet inn</th>
+                <th>Målforskjell</th>
+                <th>Poengsum</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="inter">
+                <td>1</td>
+                <td>Inter</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+            </tr>
+            <tr id="milan">
+                <td>2</td>
+                <td>Milan</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+            </tr>
+            <tr id="roma">
+                <td>3</td>
+                <td>Roma</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+            </tr>
+        </tbody>
+    </table>
+    <script>
+        let table = document.querySelector("table");
+        let form = document.querySelector("form");
+        let rowElements = table.tBodies[0].children;
+        let input = document.querySelectorAll("input");
+        let select = document.querySelectorAll("select");
+        let teamData = {
+            inter: {
+                nr: 1,
+                klubb: "inter",
+                matches: 0,
+                won: 0,
+                lost: 0,
+                tie: 0,
+                goals: 0, 
+                conceded: 0, 
+                goalDifference: 0, 
+                points: 0
+            },
+            milan: {
+                nr: 1,
+                klubb: "milan",
+                matches: 0,
+                won: 0,
+                lost: 0,
+                tie: 0,
+                goals: 0, 
+                conceded: 0, 
+                goalDifference: 0, 
+                points: 0
+            },
+            roma: {
+                nr: 1,
+                klubb: "roma",
+                matches: 0,
+                won: 0,
+                lost: 0,
+                tie: 0,
+                goals: 0, 
+                conceded: 0, 
+                goalDifference: 0, 
+                points: 0
+            }
+        }
+        updateTableInSortedOrder();
+        
+        function submitData(event){
+            event.preventDefault();
+
+            let homeTeam = teamData[select[0].value];
+            let awayTeam = teamData[select[1].value];
+            let homeGoals = Number(input[0].value);
+            let awayGoals = Number(input[1].value);
+            let result = determineWinner(homeGoals, awayGoals);
+
+            if (homeTeam === awayTeam){
+                alert("You need to select two different teams");
+                return;
+            }
+
+            ++homeTeam["matches"];
+            ++awayTeam["matches"];
+            homeTeam["goals"] += homeGoals;
+            awayTeam["goals"] += awayGoals;
+            homeTeam["conceded"] += awayGoals;
+            awayTeam["conceded"] += homeGoals;
+            homeTeam["goalDifference"] = homeTeam["goals"] - homeTeam["conceded"]; 
+            awayTeam["goalDifference"] = awayTeam["goals"] - homeTeam["conceded"];
+            
+            switch(result){
+                case "home":
+                    ++homeTeam["won"];
+                    ++awayTeam["lost"]; 
+                    homeTeam["points"] += 3;
+                    break;
+                case "away": 
+                    ++homeTeam["lost"];
+                    ++awayTeam["won"]; 
+                    awayTeam["points"] += 3;
+                    break;
+                case "tie":
+                    ++homeTeam["tie"];
+                    ++awayTeam["tie"]; 
+                    homeTeam["points"] += 1;
+                    awayTeam["points"] += 1;
+                    break;
+                default: break;
+            }
+            
+            updateTableInSortedOrder();
+            form.reset();
+        }
+
+        function updateTableInSortedOrder(){
+            let count = 0;
+            for(let p in teamData){
+                let count2 = 0;
+                for(let properties in teamData[p]){
+                    rowElements[count].children[count2].innerHTML = teamData[p][properties];
+                    ++count2;
+                }
+                ++count;
+            }
+        }
+        
+        function determineWinner(homeGoals, awayGoals){
+            if (homeGoals > awayGoals) return "home";
+            else if (homeGoals < awayGoals) return "away";
+            else return "tie";
+        }
+    </script>
+</body>
+</html>
